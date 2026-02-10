@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3alWatch | Universal Ultra Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.407.0/dist/umd/lucide.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        
+        .deal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .deal-card:hover { transform: translateY(-4px); border-color: #3b82f6; }
+        
+        .btn-active:active { background-color: #2563eb !important; transform: scale(0.96); transition: all 0.1s; }
+        
+        .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        
+        .filter-btn.active { background-color: #2563eb; color: white; border-color: transparent; }
+        
+        .ultra-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+        
+        .ultra-border {
+            border: 2px solid transparent;
+            background-image: linear-gradient(#0f172a, #0f172a), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-slide {
+            animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .source-tag { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .source-ebay { background: #0064d220; color: #0064d2; border: 1px solid #0064d240; }
+        .source-amazon { background: #ff990020; color: #ff9900; border: 1px solid #ff990040; }
+        .source-njuskalo { background: #facc1520; color: #eab308; border: 1px solid #facc1540; }
+
+        .shimmer {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer-anim 1.5s infinite;
+        }
+        @keyframes shimmer-anim { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Vlog / Update Modal (Hidden by Default) -->
+    <div id="vlog-modal" class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/95 backdrop-blur-xl transition-all duration-500 px-4 opacity-0 pointer-events-none">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden shadow-2xl modal-slide">
+            <div class="ultra-gradient p-6 text-white">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black tracking-widest uppercase bg-white/20 px-2 py-1 rounded">Update Log</span>
+                    <button onclick="window.toggleVlog()" class="hover:bg-white/20 rounded-full p-1"><i data-lucide="x" size="18"></i></button>
+                </div>
+                <h2 class="text-3xl font-black">Ultra & Better Alerts</h2>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                            <i data-lucide="zap"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white">Ultra Mode Ready</h4>
+                            <p class="text-sm text-slate-400">Unlock universal tracking and AI scraping with the new Ultra version.</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="window.toggleVlog()" class="w-full py-4 bg-white text-slate-900 font-black rounded-2xl hover:bg-slate-200 btn-active transition-all uppercase tracking-widest text-sm">
+                    Back to App
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="window.navigate('feed')">
+                <div class="relative w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <defs>
+                            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M10 50 Q50 10 90 50 Q50 90 10 50" fill="none" stroke="url(#logo-grad)" stroke-width="6" stroke-linecap="round" />
+                        <path d="M25 50 Q50 25 75 50 Q50 75 25 50" fill="none" stroke="#60a5fa" stroke-width="4" />
+                        <circle cx="50" cy="50" r="8" fill="white" class="pulse" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">D3al<span class="text-blue-500">Watch</span></h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div id="ultra-badge" class="hidden ultra-gradient text-[10px] font-black px-2 py-1 rounded text-white uppercase tracking-tighter">Ultra Enabled</div>
+                
+                <!-- New Vlog Button -->
+                <button id="vlog-btn" onclick="window.toggleVlog()" class="p-2 text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1.5 group">
+                    <i data-lucide="clapperboard" size="20"></i>
+                    <span class="text-[10px] font-bold uppercase hidden md:inline">Vlog</span>
+                </button>
+
+                <button id="nav-settings-btn" onclick="window.navigate('settings')" class="p-2 text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="settings" size="20"></i>
+                </button>
+                
+                <button id="account-btn" onclick="window.navigate('account')" class="flex items-center gap-2 p-1.5 bg-slate-800 border border-slate-700 rounded-full hover:border-blue-500 transition-all group">
+                    <div id="avatar-placeholder" class="w-7 h-7 bg-slate-700 rounded-full flex items-center justify-center text-[10px] font-bold text-white group-hover:bg-blue-600 transition-colors uppercase">
+                        ?
+                    </div>
+                </button>
+
+                <button id="ultra-nav-btn" onclick="window.toggleUltraModal()" class="ultra-gradient text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shadow-lg hover:scale-105 btn-active flex items-center gap-2">
+                    <i data-lucide="zap" size="14"></i>
+                    <span id="ultra-status-text">Ultra</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="view-feed" class="max-w-6xl mx-auto px-4 mt-8 flex-grow w-full view">
+        <!-- AI Panel -->
+        <section id="ai-panel" class="mb-10 p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 shadow-xl border-l-4 border-l-blue-500">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+                        <i data-lucide="sparkles" size="24"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold" id="ai-title">Scout AI v1.0</h2>
+                        <p id="ai-subtitle" class="text-sm text-slate-400 italic">Universal scraping enabled for Ultra users.</p>
+                    </div>
+                </div>
+                <div id="scraping-indicator" class="hidden flex items-center gap-2 text-xs font-bold text-indigo-400">
+                    <div class="w-2 h-2 bg-indigo-500 rounded-full animate-ping"></div>
+                    LIVE SCANNING
+                </div>
+            </div>
+            <div id="ai-content" class="text-slate-200 italic leading-relaxed min-h-[3rem]">
+                Scanning marketplaces for current deals...
+            </div>
+        </section>
+
+        <!-- Category Filters -->
+        <div id="filter-container" class="flex flex-wrap gap-3 mb-8">
+            <button id="filter-all" onclick="window.updateView('All')" class="filter-btn active px-4 py-2 rounded-xl bg-slate-800 text-slate-400 font-medium text-sm border border-slate-700 btn-active transition-all">All Deals</button>
+            <button id="filter-filament" onclick="window.updateView('Filament')" class="filter-btn px-4 py-2 rounded-xl bg-slate-800 text-slate-400 font-medium text-sm border border-slate-700 btn-active transition-all">3D Print</button>
+            <button id="filter-tech" onclick="window.updateView('Tech')" class="hidden filter-btn px-4 py-2 rounded-xl bg-slate-800 text-slate-400 font-medium text-sm border border-slate-700 btn-active transition-all">Tech (Ultra)</button>
+            <button id="filter-home" onclick="window.updateView('Home')" class="hidden filter-btn px-4 py-2 rounded-xl bg-slate-800 text-slate-400 font-medium text-sm border border-slate-700 btn-active transition-all">Home (Ultra)</button>
+        </div>
+
+        <!-- Grid -->
+        <div id="deals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+            <div class="h-64 rounded-2xl shimmer"></div>
+            <div class="h-64 rounded-2xl shimmer"></div>
+            <div class="h-64 rounded-2xl shimmer"></div>
+        </div>
+    </main>
+
+    <!-- Account View -->
+    <main id="view-account" class="hidden max-w-2xl mx-auto px-4 mt-8 flex-grow w-full view">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-black">Account System</h2>
+            <button onclick="window.navigate('feed')" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><i data-lucide="x"></i></button>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6 shadow-xl">
+            <div class="flex items-center gap-6">
+                <div id="profile-avatar-large" class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl font-black text-white uppercase">
+                    ?
+                </div>
+                <div>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Status</p>
+                    <h3 id="display-name" class="text-2xl font-bold">Guest Scout</h3>
+                    <p id="user-uid" class="text-xs text-slate-600 font-mono break-all mt-1"></p>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-800 space-y-4">
+                <div class="space-y-2">
+                    <label class="text-xs font-black text-slate-400 uppercase">Username</label>
+                    <div class="flex gap-2">
+                        <input id="username-input" type="text" placeholder="Enter new username" class="flex-grow bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors">
+                        <button onclick="window.saveUsername()" class="px-6 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-colors">Save</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="ultra-status-box" class="p-6 rounded-2xl border border-slate-800 bg-slate-950 text-center">
+                <p class="text-sm text-slate-400 mb-2">Ultra Membership</p>
+                <div id="ultra-status-indicator" class="text-xs font-black uppercase text-slate-600">Inactive</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings View -->
+    <main id="view-settings" class="hidden max-w-2xl mx-auto px-4 mt-8 flex-grow w-full view">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-black">Preferences</h2>
+            <button onclick="window.navigate('feed')" class="p-2 hover:bg-slate-800 rounded-full transition-colors"><i data-lucide="x"></i></button>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-2 shadow-xl">
+            <div class="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors">
+                <div class="flex items-center gap-4">
+                    <i data-lucide="bell" class="text-blue-400"></i>
+                    <div>
+                        <p class="font-bold text-sm">Better Alerts</p>
+                        <p class="text-[10px] text-slate-500">Enhanced push notification system</p>
+                    </div>
+                </div>
+                <input type="checkbox" checked class="w-5 h-5 accent-blue-500">
+            </div>
+            <div class="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors">
+                <div class="flex items-center gap-4">
+                    <i data-lucide="zap" class="text-indigo-400"></i>
+                    <div>
+                        <p class="font-bold text-sm">Ultra Scanning</p>
+                        <p class="text-[10px] text-slate-500">Auto-refresh marketplace data</p>
+                    </div>
+                </div>
+                <input type="checkbox" checked class="w-5 h-5 accent-indigo-500">
+            </div>
+            <div class="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors">
+                <div class="flex items-center gap-4">
+                    <i data-lucide="smartphone" class="text-emerald-400"></i>
+                    <div>
+                        <p class="font-bold text-sm">Browser Alerts</p>
+                        <p class="text-[10px] text-slate-500">Popups for redirect confirmation</p>
+                    </div>
+                </div>
+                <input type="checkbox" checked class="w-5 h-5 accent-emerald-500">
+            </div>
+        </div>
+    </main>
+
+    <!-- Ultra Modal -->
+    <div id="ultra-modal" class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 px-4">
+        <div id="ultra-modal-container" class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="ultra-gradient p-8 text-white relative shrink-0">
+                <button onclick="window.toggleUltraModal()" class="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-1.5 rounded-full transition-colors z-10">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+                <div class="flex items-center gap-3 mb-2">
+                    <i data-lucide="crown" class="text-yellow-300"></i>
+                    <h3 class="text-2xl font-bold">D3alWatch Ultra</h3>
+                </div>
+                <p class="text-white/80">Premium features for elite deal seekers.</p>
+            </div>
+            
+            <div class="p-8 space-y-6 overflow-y-auto no-scrollbar flex-grow bg-slate-900">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                            <i data-lucide="search" size="20"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm">Universal Scan</p>
+                            <p class="text-[10px] text-slate-400">Automated tracking across Amazon, eBay, and regional marketplaces.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 shrink-0">
+                            <i data-lucide="cpu" size="20"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm">Tech & Home Unlocked</p>
+                            <p class="text-[10px] text-slate-400">Exclusive access to high-demand electronics and home equipment.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                        <div class="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0">
+                            <i data-lucide="history" size="20"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm">Price History</p>
+                            <p class="text-[10px] text-slate-400">View detailed analytics of price fluctuations over time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 text-center">
+                    <p class="text-xs text-slate-500 font-bold uppercase mb-4">Beta Access Only</p>
+                    <div class="p-6 rounded-2xl bg-slate-800 border-2 border-dashed border-slate-700">
+                        <p class="text-slate-400 text-sm mb-4">Enter your access code to unlock Ultra.</p>
+                        <div class="flex flex-col gap-3">
+                            <input type="text" id="coupon-input" placeholder="ACCESS CODE" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none font-mono text-center uppercase">
+                            <button onclick="window.applyCoupon()" class="w-full py-3 bg-white text-black rounded-xl font-bold hover:bg-slate-200 btn-active transition-all">Unlock Lifetime Access</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let isUltra = false;
+        let currentUser = null;
+        let currentView = 'feed';
+
+        const baseDeals = [
+            { id: 1, cat: "Filament", store: "Bambu Lab", product: "PLA Basic Refill", current: 16.99, old: 24.99, tag: "Sale", source: "Amazon", url: "https://www.amazon.com/s?k=bambu+lab+pla+basic" },
+            { id: 2, cat: "Filament", store: "Bambu Lab", product: "PLA Matte White", current: 15.99, old: 27.99, tag: "Bulk", source: "Amazon", url: "https://www.amazon.com/s?k=bambu+lab+pla+matte" },
+            { id: 3, cat: "Filament", store: "Prusa Research", product: "Prusament PLA Black", current: 22.50, old: 29.99, tag: "Premium", source: "Amazon", url: "https://www.amazon.com/s?k=prusament+pla+black" }
+        ];
+
+        const ultraDeals = [
+            ...baseDeals,
+            { id: 101, cat: "Tech", store: "Amazon", product: "Sony WH-1000XM5", current: 289.00, old: 349.00, tag: "Best Price", source: "Amazon", url: "https://www.amazon.com/Sony-WH-1000XM5-Canceling-Headphones-Hands-Free/dp/B09XS7JWHH" },
+            { id: 102, cat: "Home", store: "Njuškalo", product: "Herman Miller Aeron", current: 450.00, old: 900.00, tag: "Used", source: "Njuškalo", url: "https://www.njuskalo.hr/index.php?ctl=search_ads&keywords=herman+miller+aeron" }
+        ];
+
+        // --- Navigation ---
+        window.navigate = (viewId) => {
+            if (currentView === viewId && viewId !== 'feed') {
+                viewId = 'feed';
+            }
+            
+            currentView = viewId;
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            if(document.getElementById(`view-${viewId}`)) {
+                document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            }
+            
+            const settingsBtn = document.getElementById('nav-settings-btn');
+            if(settingsBtn) {
+                settingsBtn.classList.toggle('text-blue-400', viewId === 'settings');
+                settingsBtn.classList.toggle('text-slate-400', viewId !== 'settings');
+            }
+            
+            const accountBtn = document.getElementById('account-btn');
+            if(accountBtn) {
+                accountBtn.classList.toggle('border-blue-500', viewId === 'account');
+                accountBtn.classList.toggle('border-slate-700', viewId !== 'account');
+            }
+            
+            window.scrollTo(0,0);
+        };
+
+        // --- Toggle Vlog Modal ---
+        window.toggleVlog = () => {
+            const v = document.getElementById('vlog-modal');
+            if(!v) return;
+            const isHidden = v.classList.contains('opacity-0');
+            v.classList.toggle('opacity-0', !isHidden);
+            v.classList.toggle('pointer-events-none', !isHidden);
+        };
+
+        // --- Redirect Logic ---
+        window.goToListing = (url) => {
+            if (!url) return;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        };
+
+        // --- Account System ---
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                updateAccountUI();
+                await syncProfileData();
+            }
+        });
+
+        const updateAccountUI = () => {
+            if (!currentUser) return;
+            const name = currentUser.displayName || "Guest Scout";
+            const initial = name.charAt(0);
+            
+            const dispName = document.getElementById('display-name');
+            if(dispName) dispName.innerText = name;
+            
+            const userUid = document.getElementById('user-uid');
+            if(userUid) userUid.innerText = `ID: ${currentUser.uid}`;
+            
+            const avatarPlace = document.getElementById('avatar-placeholder');
+            if(avatarPlace) avatarPlace.innerText = initial;
+            
+            const avatarLarge = document.getElementById('profile-avatar-large');
+            if(avatarLarge) avatarLarge.innerText = initial;
+        };
+
+        const syncProfileData = async () => {
+            if (!currentUser) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'settings');
+            try {
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.isUltra) {
+                        window.activateUltra(true);
+                    }
+                }
+            } catch (e) { console.error("Sync error", e); }
+        };
+
+        window.saveUsername = async () => {
+            if (!currentUser) return;
+            const input = document.getElementById('username-input');
+            const name = input.value.trim();
+            if (!name) return;
+            
+            try {
+                await updateProfile(auth.currentUser, { displayName: name });
+                await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'settings'), {
+                    username: name,
+                    updatedAt: new Date()
+                }, { merge: true });
+                
+                updateAccountUI();
+                input.value = '';
+                alert(`SUCCESS: Username updated to ${name}`);
+            } catch (e) {
+                console.error(e);
+                alert("ERROR: Could not update profile.");
+            }
+        };
+
+        // --- Ultra Logic ---
+        window.toggleUltraModal = () => {
+            const m = document.getElementById('ultra-modal');
+            const show = m.classList.contains('opacity-0');
+            m.classList.toggle('opacity-0', !show);
+            m.classList.toggle('pointer-events-none', !show);
+        };
+
+        window.activateUltra = async (silent = false) => {
+            isUltra = true;
+            const ultraStatusText = document.getElementById('ultra-status-text');
+            if(ultraStatusText) ultraStatusText.innerText = "Ultra Active";
+            
+            const ultraBadge = document.getElementById('ultra-badge');
+            if(ultraBadge) ultraBadge.classList.remove('hidden');
+            
+            const indicatorScrape = document.getElementById('scraping-indicator');
+            if(indicatorScrape) indicatorScrape.classList.remove('hidden');
+            
+            const aiPanel = document.getElementById('ai-panel');
+            if(aiPanel) aiPanel.classList.add('ultra-border');
+            
+            const filterTech = document.getElementById('filter-tech');
+            if(filterTech) filterTech.classList.remove('hidden');
+            
+            const filterHome = document.getElementById('filter-home');
+            if(filterHome) filterHome.classList.remove('hidden');
+            
+            const aiSubtitle = document.getElementById('ai-subtitle');
+            if(aiSubtitle) aiSubtitle.innerText = "Universal cloud scraping enabled.";
+            
+            const indicator = document.getElementById('ultra-status-indicator');
+            if (indicator) {
+                indicator.innerText = "Active Lifetime";
+                indicator.classList.remove('text-slate-600');
+                indicator.classList.add('text-emerald-400');
+            }
+
+            window.updateView('All');
+            
+            if (!silent) {
+                if (currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'settings'), {
+                        isUltra: true
+                    }, { merge: true });
+                }
+                alert("SUCCESS: D3alWatch Ultra Activated!");
+                setTimeout(window.toggleUltraModal, 500);
+            }
+        };
+
+        window.applyCoupon = () => {
+            const input = document.getElementById('coupon-input');
+            const code = input ? input.value.trim().toUpperCase() : '';
+            if (code === 'ULTRA10' || code === 'DEV1185') {
+                window.activateUltra();
+            } else {
+                alert("ERROR: Invalid access code.");
+            }
+        };
+
+        window.updateView = (filter) => {
+            const grid = document.getElementById('deals-grid');
+            if(!grid) return;
+            
+            const dataSet = isUltra ? ultraDeals : baseDeals;
+            const filtered = filter === 'All' ? dataSet : dataSet.filter(d => d.cat === filter);
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`filter-${filter.toLowerCase()}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            grid.innerHTML = filtered.map(deal => `
+                <div class="deal-card p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="source-tag source-${deal.source.toLowerCase()}">${deal.source}</span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">${deal.tag}</span>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-1">${deal.product}</h3>
+                        <p class="text-2xl font-bold text-white">€${deal.current.toFixed(2)}</p>
+                        ${deal.old ? `<p class="text-xs text-slate-500 line-through">€${deal.old.toFixed(2)}</p>` : ''}
+                    </div>
+                    <button onclick="window.goToListing('${deal.url}')" class="mt-6 w-full py-3 bg-slate-800 hover:bg-slate-700 btn-active transition-colors rounded-xl font-bold text-sm">View Listing</button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+            
+            const aiContent = document.getElementById('ai-content');
+            if(aiContent) {
+                aiContent.innerText = isUltra ? 
+                    `Analyzed ${filtered.length} elite deals. AI Scraping active.` :
+                    `Tracking ${filtered.length} deals. Unlock Ultra for universal search.`;
+            }
+        };
+
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            window.updateView('All');
+        });
+    </script>
+</body>
+</html>
